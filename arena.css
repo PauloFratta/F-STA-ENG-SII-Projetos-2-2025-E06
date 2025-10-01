@@ -131,3 +131,60 @@ footer {
   background: rgba(20, 0, 0, 0.9);
   font-size: 0.9rem;
 }
+
+/* Cabeçalho */
+    header {
+      width: 97%;
+      padding: 12px 20px;
+      position: absolute;
+      top: 0;
+      left: 10;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(10, 10, 20, 0.4);
+      border-bottom: 1px solid #1e2230;
+      z-index: 1000;
+    }
+    
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #d1d6ff;
+      font-family: 'Cinzel', serif;
+      font-size: 1.4rem;
+      text-shadow: 0 0 12px #7c8cff;
+    }
+
+    #logo img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #7c8cff;
+    }
+
+    .user-options {
+      display: flex;
+      gap: 16px;
+    }
+
+    .user-options button {
+      background: transparent;
+      border: 1px solid #4c4f66;
+      color: #b0b6d9;
+      font-size: 0.9rem;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-left: 6px;
+    }
+
+    .user-options button:hover {
+      border-color: #7c8cff;
+      color: #ffffff;
+      text-shadow: 0 0 8px #7c8cff;
+    }

@@ -7,6 +7,32 @@
   <!-- Fonte -->
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600&family=Inter:wght@300;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="index.css"/>
+  <style>
+    /* botão logout só aparece ao passar o mouse na foto */
+
+    #btn-logout {
+      display: none;
+      position: absolute;
+      top: 55px;
+      left: center;
+      background: #a30000;
+      border: none;
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      z-index: 100;
+    }
+
+    .logo:hover #btn-logout {
+      display: block;
+    }
+
+    #fotoPerfil {
+      border-radius: 50%;
+      cursor: pointer;
+    }
+  </style>
 </head>
 
 
@@ -15,14 +41,15 @@
   <header>
 
      <div class="logo" id="logo">
-    <img id="fotoPerfil" src="" alt="Foto de perfil" width="100">
-    <span id="nome-usuario">CyberMaker</span>
-  </div>
+        <img id="fotoPerfil" src="imagens/void.jpg" alt="Foto de perfil" >
+        <button id="btn-logout">Sair</button>
+        <span id="nome-usuario">CyberMaker</span>
+     </div>
+     
   <div class="user-options" id="user-options">
    <a href="inicio.html"> <button id="btn-inicio">Início</button></a>
     <a href="login.html"><button id="btn-login">Login</button></a>
     <a href="registrar.html"><button id="btn-registrar">Registrar</button></a>
-    <button id="btn-logout" style="display:none;">Logout</button>
   </div>
 
   </header>
@@ -89,12 +116,32 @@
   <!-- Script -->
   
  <script>
-  //exibir foto de perfil
-    const usuarioLogado = JSON.parse(localStorage.getItem("usuarioLogado"));
-  if (usuarioLogado && usuarioLogado.foto) {
-    document.getElementById("fotoPerfil").src = usuarioLogado.foto;
+  const usuarioLogado = JSON.parse(localStorage.getItem("usuarioLogado"));
+  const fotoPerfil = document.getElementById("fotoPerfil");
+  const nomeUsuario = document.getElementById("nome-usuario");
+  const btnLogout = document.getElementById("btn-logout");
+
+  function atualizarHeader() {
+    if (usuarioLogado) {
+      nomeUsuario.textContent = usuarioLogado.nome;
+      fotoPerfil.src = usuarioLogado.foto || "default.png";
+    } else {
+      nomeUsuario.textContent = "CyberMaker";
+      fotoPerfil.src = "default.png";
+    }
   }
-  // Criar partículas frias (iniciais)
+
+  btnLogout.addEventListener("click", () => {
+    localStorage.removeItem("usuarioLogado");
+    nomeUsuario.textContent = "CyberMaker";
+    fotoPerfil.src = "default.png";
+    alert("Você saiu da conta!");
+    window.location.href = "inicio.html";
+  });
+
+  atualizarHeader();
+
+  // partículas (mantive seu efeito)
   let coldParticles = [];
   for(let i=0;i<250;i++){
       const p=document.createElement('div');
@@ -125,7 +172,6 @@
   let hotParticlesCreated = false;
   let hotParticles = [];
 
-  // Transição para Silksong
   window.addEventListener("scroll", () => {
     const scrollTop = window.scrollY;
     const windowHeight = window.innerHeight;
@@ -134,10 +180,8 @@
     if(scrollTop + windowHeight >= docHeight * 0.7){
       document.body.classList.add("silksong");
 
-      // Esconder partículas frias
       coldParticles.forEach(p => p.style.display = "none");
 
-      // Criar partículas quentes se ainda não foram criadas
       if(!hotParticlesCreated){
         for(let i=0;i<150;i++){
           const p = document.createElement('div');
@@ -150,23 +194,16 @@
         }
         hotParticlesCreated = true;
       } else {
-        // Mostrar partículas quentes novamente
         hotParticles.forEach(p => p.style.display = "block");
       }
 
     } else {
       document.body.classList.remove("silksong");
-
-      // Mostrar partículas frias
       coldParticles.forEach(p => p.style.display = "block");
-
-      // Esconder partículas quentes
       hotParticles.forEach(p => p.style.display = "none");
     }
   });
 </script>
-
-
 
   </div>
 </body>
