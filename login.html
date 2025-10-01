@@ -10,7 +10,7 @@
   <header>
     <div class="logo">CyberMaker - Login</div>
     <div class="user-options">
-      <button onclick="window.location.href='inicio.html'">Voltar</button>
+      <button onclick="window.location.href='index.html'">Voltar</button>
       <button onclick="window.location.href='registrar.html'">Registrar</button>
     </div>
   </header>
@@ -24,7 +24,7 @@
         <button type="submit">Entrar</button>
       </form>
       <div class="back-button">
-        <a href="inicio.html"><button class="choice-btn"><span>Voltar ao Inicio</span></button></a>
+        <a href="index.html"><button class="choice-btn"><span>Voltar ao Inicio</span></button></a>
       </div>
     </div>
   </main>
@@ -46,7 +46,7 @@
     if (data.success) {
       localStorage.setItem("usuarioLogado", JSON.stringify(data.usuario));
       alert("Login realizado!");
-      window.location.href = "inicio.html";
+      window.location.href = "index.html";
     } else {
       alert("Erro: " + data.error);
     }
