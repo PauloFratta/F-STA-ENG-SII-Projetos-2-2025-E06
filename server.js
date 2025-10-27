@@ -1,159 +1,82 @@
 import express from "express";
 import mysql from "mysql2/promise";
 import cors from "cors";
-import bcrypt from "bcrypt";
+import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
-//import connect from "conection.js";
+
+dotenv.config();
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
 const app = express();
+
+// Configurações básicas
 app.use(cors());
-app.use(express.json({ limit: "10mb" })); // allow image uploads as base64
-
-// Read DB config from environment variables for deployment platforms
-const DB_HOST = process.env.DB_HOST || "localhost";
-const DB_USER = process.env.DB_USER || "root";
-const DB_PASSWORD = process.env.DB_PASSWORD || "Automata";
-const DB_NAME = process.env.DB_NAME || "CyberMaker";
-const PORT = process.env.PORT || 10000;
-
-const pool = mysql.createPool({
-  host: DB_HOST,
-  user: DB_USER,
-  password: DB_PASSWORD,
-  database: DB_NAME,
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
-});
-
-// Serve static frontend (the site files)
+app.use(express.json());
 app.use(express.static(path.join(__dirname)));
 
-app.get("/api/ping", (req,res)=>res.json({ok:true}));
+// Conexão com banco (usando variáveis de ambiente)
+const pool = mysql.createPool({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASS,
+  database: process.env.DB_NAME,
+  port: process.env.DB_PORT || 3306,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+  ssl: { rejectUnauthorized: true } // necessário no Clever Cloud
+});
 
-// Register user
-app.post("/api/registrar", async (req, res) => {
+// ==================== ROTAS ====================
+
+// Exemplo: registro de usuário
+app.post("/registrar", async (req, res) => {
   try {
-    const { nome, email, senha, foto } = req.body;
-    if (!nome || !email || !senha) return res.status(400).json({ success:false, error: "Faltando campos" });
+    const { usuario, senha } = req.body;
+    if (!usuario || !senha) {
+      return res.status(400).json({ message: "Usuário e senha são obrigatórios." });
+    }
 
-    const [rows] = await pool.query("SELECT id FROM usuarios WHERE email = ?", [email]);
-    if (rows.length > 0) return res.status(400).json({ success:false, error: "Email já cadastrado" });
-
-    const hash = await bcrypt.hash(senha, 10);
-    const fotoVal = foto || null;
-    const [result] = await pool.query(
-      "INSERT INTO usuarios (nome, email, senha, foto, pontos, online) VALUES (?, ?, ?, ?, 0, FALSE)",
-      [nome, email, hash, fotoVal]
+    const [rows] = await pool.query(
+      "INSERT INTO usuarios (usuario, senha) VALUES (?, ?)",
+      [usuario, senha]
     );
-    res.json({ success: true, id: result.insertId });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ success:false, error: "Erro interno" });
+
+    res.status(201).json({ message: "Usuário registrado com sucesso!" });
+  } catch (error) {
+    console.error("Erro ao registrar:", error);
+    res.status(500).json({ message: "Erro no servidor." });
   }
 });
 
-// Login
-app.post("/api/login", async (req,res) => {
-  try{
-    const { email, senha } = req.body;
-    if(!email || !senha) return res.status(400).json({ success:false, error:"Faltando campos" });
+// Exemplo: login
+app.post("/login", async (req, res) => {
+  try {
+    const { usuario, senha } = req.body;
 
-    const [rows] = await pool.query("SELECT id, nome, email, senha, foto, pontos FROM usuarios WHERE email = ?", [email]);
-    if (rows.length === 0) return res.status(400).json({ success:false, error:"Usuário não encontrado" });
+    const [rows] = await pool.query(
+      "SELECT * FROM usuarios WHERE usuario = ? AND senha = ?",
+      [usuario, senha]
+    );
 
-    const user = rows[0];
-    const match = await bcrypt.compare(senha, user.senha);
-    if (!match) return res.status(401).json({ success:false, error:"Senha incorreta" });
-
-    // remove senha before sending
-    delete user.senha;
-    res.json({ success:true, usuario: user });
-  } catch(err){
-    console.error(err);
-    res.status(500).json({ success:false, error:"Erro interno" });
+    if (rows.length > 0) {
+      res.json({ message: "Login bem-sucedido!" });
+    } else {
+      res.status(401).json({ message: "Usuário ou senha incorretos." });
+    }
+  } catch (error) {
+    console.error("Erro no login:", error);
+    res.status(500).json({ message: "Erro no servidor." });
   }
 });
 
-// Mark online
-app.post("/api/usuarios/online", async (req,res) => {
-  try{
-    const { usuario_id } = req.body;
-    if (!usuario_id) return res.status(400).json({ success:false, error:"ID ausente" });
-    await pool.query("UPDATE usuarios SET online = TRUE WHERE id = ?", [usuario_id]);
-    res.json({ success:true });
-  }catch(err){
-    console.error(err);
-    res.status(500).json({ success:false, error:"Erro interno" });
-  }
-});
-
-// Mark offline
-app.post("/api/usuarios/offline", async (req,res) => {
-  try{
-    const { usuario_id } = req.body;
-    if (!usuario_id) return res.status(400).json({ success:false, error:"ID ausente" });
-    await pool.query("UPDATE usuarios SET online = FALSE WHERE id = ?", [usuario_id]);
-    res.json({ success:true });
-  }catch(err){
-    console.error(err);
-    res.status(500).json({ success:false, error:"Erro interno" });
-  }
-});
-
-// Ranking
-app.get("/api/ranking", async (req,res) => {
-  try{
-    const [rows] = await pool.query("SELECT id, nome, pontos, online, foto FROM usuarios ORDER BY pontos DESC LIMIT 100");
-    res.json(rows);
-  }catch(err){
-    console.error(err);
-    res.status(500).json({ success:false, error:"Erro interno" });
-  }
-});
-
-// Ideas (diário / arena) - basic CRUD
-app.get("/api/ideias", async (req,res) => {
-  try{
-    const [rows] = await pool.query("SELECT * FROM ideias ORDER BY id DESC LIMIT 200");
-    res.json(rows);
-  }catch(err){
-    console.error(err);
-    res.status(500).json({ success:false, error:"Erro interno" });
-  }
-});
-
-app.get("/api/ideias/:usuario_id", async (req,res) => {
-  try{
-    const usuario_id = req.params.usuario_id;
-    const [rows] = await pool.query("SELECT * FROM ideias WHERE usuario_id = ? ORDER BY id DESC", [usuario_id]);
-    res.json(rows);
-  }catch(err){
-    console.error(err);
-    res.status(500).json({ success:false, error:"Erro interno" });
-  }
-});
-
-app.post("/api/ideias", async (req,res) => {
-  try{
-    const { usuario_id, titulo, texto } = req.body;
-    if(!usuario_id || !titulo) return res.status(400).json({ success:false, error:"Faltando campos" });
-    const [result] = await pool.query("INSERT INTO ideias (usuario_id, titulo, texto, created_at) VALUES (?, ?, ?, NOW())", [usuario_id, titulo, texto || ""]);
-    res.json({ success:true, id: result.insertId });
-  }catch(err){
-    console.error(err);
-    res.status(500).json({ success:false, error:"Erro interno" });
-  }
-});
-
-// Fallback to index.html for SPA routes
-app.get("*", (req,res) => {
+// Página inicial
+app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-app.listen(PORT, ()=> {
-  console.log("Server running on port", PORT);
-});
+// Porta Render (Render define PORT automaticamente)
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
