@@ -9,7 +9,7 @@ document.getElementById("form-registro").addEventListener("submit", async e => {
   // função auxiliar para enviar ao backend
   async function enviarRegistro(fotoBase64 = null) {
     try {
-      const res = await fetch("/api/registrar", {
+      const res = await fetch("http://localhost:3000/api/registrar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nome, email, senha, foto: fotoBase64 })
