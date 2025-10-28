@@ -57,7 +57,7 @@ app.post("/api/registrar", async (req, res) => {
 });
 
 // Login
-app.post("/api/login", async (req,res) => {
+app.post("${process.env.REACT_APP_BACKEND_URL}/api/login", async (req,res) => {
   try{
     const { email, senha } = req.body;
     if(!email || !senha) return res.status(400).json({ success:false, error:"Faltando campos" });
