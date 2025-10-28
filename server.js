@@ -17,7 +17,7 @@ const DB_HOST = process.env.DB_HOST || "localhost";
 const DB_USER = process.env.DB_USER || "root";
 const DB_PASSWORD = process.env.DB_PASSWORD || "ooTphHt42wy49L1ywfRU";
 const DB_NAME = process.env.DB_NAME || "CyberMaker";
-const PORT = process.env.PORT || 10000;
+const PORT = process.env.PORT || 3006;
 
 const pool = mysql.createPool({
   host: DB_HOST,
