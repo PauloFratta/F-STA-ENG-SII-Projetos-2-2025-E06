@@ -68,10 +68,10 @@ const PORT = process.env.PORT || 3000;
 // Serve static frontend (the site files)
 app.use(express.static(path.join(__dirname)));
 
-app.get("/api/ping", (req, res) => res.json({ ok: true }));
+app.get("https://cybermakersite-production.up.railway.app/api/ping", (req, res) => res.json({ ok: true }));
 
 // Register user
-app.post("/api/registrar", async (req, res) => {
+app.post("https://cybermakersite-production.up.railway.app/api/registrar", async (req, res) => {
   try {
     const { nome, email, senha, foto } = req.body;
     if (!nome || !email || !senha) return res.status(400).json({ success: false, error: "Faltando campos" });
@@ -93,7 +93,7 @@ app.post("/api/registrar", async (req, res) => {
 });
 
 // Login
-app.post("/api/login", async (req, res) => {
+app.post("https://cybermakersite-production.up.railway.app/api/login", async (req, res) => {
   try {
     const { email, senha } = req.body;
     if (!email || !senha) return res.status(400).json({ success: false, error: "Faltando campos" });
@@ -114,7 +114,7 @@ app.post("/api/login", async (req, res) => {
 });
 
 // Mark online
-app.post("/api/usuarios/online", async (req, res) => {
+app.post("https://cybermakersite-production.up.railway.app/api/usuarios/online", async (req, res) => {
   try {
     const { usuario_id } = req.body;
     if (!usuario_id) return res.status(400).json({ success: false, error: "ID ausente" });
@@ -127,7 +127,7 @@ app.post("/api/usuarios/online", async (req, res) => {
 });
 
 // Mark offline
-app.post("/api/usuarios/offline", async (req, res) => {
+app.post("https://cybermakersite-production.up.railway.app/api/usuarios/offline", async (req, res) => {
   try {
     const { usuario_id } = req.body;
     if (!usuario_id) return res.status(400).json({ success: false, error: "ID ausente" });
@@ -140,7 +140,7 @@ app.post("/api/usuarios/offline", async (req, res) => {
 });
 
 // Ranking
-app.get("/api/ranking", async (req, res) => {
+app.get("https://cybermakersite-production.up.railway.app/api/ranking", async (req, res) => {
   try {
     const [rows] = await pool.query("SELECT id, nome, pontos, online, foto FROM usuarios ORDER BY pontos DESC LIMIT 100");
     res.json(rows);
@@ -151,7 +151,7 @@ app.get("/api/ranking", async (req, res) => {
 });
 
 // Ideas (diário / arena)
-app.get("/api/ideias", async (req, res) => {
+app.get("https://cybermakersite-production.up.railway.app/api/ideias", async (req, res) => {
   try {
     const [rows] = await pool.query("SELECT * FROM ideias ORDER BY id DESC LIMIT 200");
     res.json(rows);
@@ -161,7 +161,7 @@ app.get("/api/ideias", async (req, res) => {
   }
 });
 
-app.get("/api/ideias/:usuario_id", async (req, res) => {
+app.get("https://cybermakersite-production.up.railway.app/api/ideias/:usuario_id", async (req, res) => {
   try {
     const usuario_id = req.params.usuario_id;
     const [rows] = await pool.query("SELECT * FROM ideias WHERE usuario_id = ? ORDER BY id DESC", [usuario_id]);
@@ -172,7 +172,7 @@ app.get("/api/ideias/:usuario_id", async (req, res) => {
   }
 });
 
-app.post("/api/ideias", async (req, res) => {
+app.post("https://cybermakersite-production.up.railway.app/api/ideias", async (req, res) => {
   try {
     const { usuario_id, titulo, texto } = req.body;
     if (!usuario_id || !titulo) return res.status(400).json({ success: false, error: "Faltando campos" });
