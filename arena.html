@@ -4,11 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Arena - CyberMaker</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600&family=Inter:wght@300;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600&family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
   <script src="script.js"></script>
   <link rel="stylesheet" href="arena.css"/>
-  
+
   <style>
+    /* ===== ESTILO ORIGINAL DA ARENA ===== */
     body {
       margin: 0;
       font-family: 'Inter', sans-serif;
@@ -95,6 +96,81 @@
       transform: scale(1.05);
     }
 
+    footer {
+      text-align: center;
+      padding: 1rem;
+      background: rgba(20,0,0,0.8);
+      border-top: 2px solid #a30000;
+      margin-top: 2rem;
+    }
+
+    /* ===== ESTILO DO RANKING ===== */
+    :root {
+      --bg:#07080b; --card:#0f1116; --accent:#7c8cff; --muted:#9aa3d9;
+      --good:#7ef0a1; --danger:#ff7878;
+    }
+    .ranking-container {
+      width:100%;
+      max-width:960px;
+      background:linear-gradient(180deg, rgba(18,18,34,0.6), rgba(10,8,16,0.6));
+      border:1px solid rgba(124,140,255,0.08);
+      border-radius:14px;
+      padding:20px;
+      margin:40px auto 0;
+      box-shadow: 0 10px 30px rgba(7,6,12,0.6);
+      backdrop-filter: blur(6px);
+    }
+
+    header.top {
+      display:flex;
+      gap:12px;
+      align-items:center;
+      justify-content:space-between;
+      margin-bottom:18px;
+    }
+    header.top h1 {
+      margin:0;
+      font-family:Cinzel, serif;
+      letter-spacing:1px;
+      font-size:1.6rem;
+      color:var(--accent);
+    }
+    .btn {
+      background:transparent;
+      border:1px solid rgba(124,140,255,0.12);
+      color:var(--muted);
+      padding:8px 12px;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:600;
+    }
+
+    .list {
+      display:grid;
+      gap:10px;
+      margin-top:6px;
+    }
+    .rank-card {
+      display:flex;
+      gap:14px;
+      align-items:center;
+      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border:1px solid rgba(124,140,255,0.04);
+      padding:12px;
+      border-radius:12px;
+      transition:transform .18s ease, box-shadow .18s ease;
+    }
+    .rank-card:hover { transform:translateY(-4px); box-shadow:0 10px 30px rgba(12,8,30,0.45); }
+
+    .rank { width:54px; height:54px; border-radius:12px; display:flex; align-items:center; justify-content:center;
+      font-weight:700; color:#071227; background:linear-gradient(180deg,#fff 0%, #dfe8ff 100%); flex-shrink:0; }
+
+    .userpic { width:54px; height:54px; border-radius:50%; overflow:hidden; flex-shrink:0; border:2px solid rgba(255,255,255,0.06);
+      background:linear-gradient(90deg,#1a1a2e,#2b0a0a); display:flex;align-items:center;justify-content:center;color:var(--muted); }
+
+    .user-info { flex:1; min-width:0; }
+    .user-info .name { font-weight:700; font-size:1rem; color:#eaf0ff; display:flex; align-items:center; gap:8px;}
+    .user-info .sub { font-size:0.85rem; color:var(--muted); margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
     /* Modal para concluir projeto */
     .modal {
       display: none;
@@ -137,44 +213,38 @@
       border-radius: 8px;
       margin-bottom: 1rem;
     }
-
-    .close-btn {
-      margin-top: 1rem;
-      background: #222;
-      color: #fff;
-      padding: 0.5rem 1rem;
-      border-radius: 8px;
-      cursor: pointer;
-      border: 1px solid #555;
-    }
-
-    footer {
-      text-align: center;
-      padding: 1rem;
-      background: rgba(20,0,0,0.8);
-      border-top: 2px solid #a30000;
-      margin-top: 2rem;
-    }
   </style>
 </head>
+
 <body>
   <header>
     <div class="logo" id="logo">
-        <img id="fotoPerfil" src="imagens/void.jpg" alt="Foto de perfil" >
-        <button id="btn-logout">Sair</button>
-        <span id="nome-usuario">CyberMaker</span>
-     </div>
-    
+      <img id="fotoPerfil" src="imagens/default.jpg" alt="Foto de perfil">
+      <span id="nome-usuario">CyberMaker</span>
+    </div>
     <nav>
-      <a href="index.html"><button> Início</button></a>
-      <a href="diario.html"><button> Diário</button></a>
+      <a href="index.html"><button>Início</button></a>
+      <a href="diario.html"><button>Diário</button></a>
     </nav>
   </header>
-
+<br><br><br><br><br><br><br><br>
+  <!-- ===== RANKING ===== -->
+  <div class="ranking-container">
+    <header class="top">
+      <h1>Ranking — CyberMaker</h1>
+      <div class="controls">
+        <div class="muted-small">Atualiza a cada 5s</div>
+        <button class="btn" id="refreshBtn" title="Forçar atualização">Atualizar</button>
+      </div>
+    </header>
+    <br><br><br>
+    <section id="list" class="list" aria-live="polite"></section>
+  </div>
+<br><br><br><br>
+  <!-- ===== IDEIAS ===== -->
   <div class="arena-container" id="arena">
     <!-- As cartas serão carregadas do localStorage -->
   </div>
-
   <!-- Modal para concluir projeto -->
   <div class="modal" id="modal">
     <div class="modal-content">
@@ -194,38 +264,71 @@
       </form>
     </div>
   </div>
-
-  <footer>
-    2025 CyberMaker - Ecos da Arena
-  </footer>
+  <footer>2025 CyberMaker - Ecos da Arena</footer>
 
   <script>
-  const arena = document.getElementById("arena");
+    /* ===== SCRIPT DO RANKING ===== */
+    async function fetchRanking() {
+      try {
+        const res = await fetch("https://cybermakersite-production.up.railway.app/api/ranking");
+        const data = await res.json();
+        renderList(data);
+      } catch (err) {
+        console.warn("Falha ao buscar ranking:", err);
+      }
+    }
 
-  async function carregarIdeias() {
-    arena.innerHTML = "";
-    const res = await fetch("https://cybermakersite-production.up.railway.app/api/ideias");
-    const ideias = await res.json();
+    function renderList(users) {
+      const listEl = document.getElementById("list");
+      listEl.innerHTML = "";
+      if (!users || users.length === 0) {
+        listEl.innerHTML = "<div class='muted-small'>Nenhum usuário encontrado.</div>";
+        return;
+      }
+      users.sort((a,b)=> (b.pontos || 0) - (a.pontos || 0));
+      users.forEach((u, idx)=>{
+        const card = document.createElement("div");
+        card.className = "rank-card";
+        card.innerHTML = `
+          <div class="rank">${idx+1}</div>
+          <div class="userpic"><img src="${u.foto || 'imagens/default.jpg'}" style="width:100%;height:100%;object-fit:cover;"></div>
+          <div class="user-info">
+            <div class="name">${u.nome || 'Usuário'}</div>
+            <div class="sub">${u.online ? 'Online' : 'Offline'}</div>
+          </div>
+          <div class="points"><strong>${u.pontos || 0}</strong> pts</div>
+        `;
+        listEl.appendChild(card);
+      });
+    }
 
-    ideias.forEach((ideia, index) => {
-      const card = document.createElement("div");
-      card.className = "card";
-      card.innerHTML = `
-        <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
-          <img src="${ideia.foto_autor || 'https://via.placeholder.com/40'}"
-               alt="foto autor" width="40" height="40" style="border-radius:50%;">
-          <strong>${ideia.autor}</strong>
-        </div>
-        <img src="${ideia.img || 'https://via.placeholder.com/300x150/550000/ffffff?text=Ideia'}" alt="foto ideia">
-        <h3>${ideia.titulo}</h3>
-        <p>${ideia.descricao}</p>
-        <button class="concluir-btn" onclick="abrirModal(${index})">Concluir</button>
-      `;
-      arena.appendChild(card);
-    });
-  }
+    document.getElementById("refreshBtn").addEventListener("click", fetchRanking);
+    fetchRanking();
+    setInterval(fetchRanking, 5000);
 
-  function abrirModal(index) {
+    /* ===== SCRIPT DAS IDEIAS ===== */
+    const arena = document.getElementById("arena");
+    async function carregarIdeias() {
+      arena.innerHTML = "";
+      const res = await fetch("https://cybermakersite-production.up.railway.app/api/ideias");
+      const ideias = await res.json();
+      ideias.forEach((ideia, index) => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+            <img src="${ideia.foto_autor || 'https://via.placeholder.com/40'}" alt="foto autor" width="40" height="40" style="border-radius:50%;">
+            <strong>${ideia.autor}</strong>
+          </div>
+          <img src="${ideia.img || 'https://via.placeholder.com/300x150/550000/ffffff?text=Ideia'}" alt="foto ideia">
+          <h3>${ideia.titulo}</h3>
+          <p>${ideia.descricao}</p>
+          <button class="concluir-btn" onclick="abrirModal(${index})">Concluir</button>
+        `;
+        arena.appendChild(card);
+      });
+    }
+    function abrirModal(index) {
     document.getElementById("modal").style.display = "flex";
     document.getElementById("concluir-form").onsubmit = (e) => {
       e.preventDefault();
@@ -238,8 +341,7 @@
     document.getElementById("modal").style.display = "none";
   }
 
-  carregarIdeias();
-</script>
-
+    carregarIdeias();
+  </script>
 </body>
 </html>
