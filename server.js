@@ -121,6 +121,36 @@ app.post("https://cybermakersite-production.up.railway.app/api/login", async (re
 
 // 🔹 Outras rotas (ranking, ideias etc.) podem continuar iguais
 // Basta mudar o prefixo para "/api/..." (sem domínio completo)
+// ==========================
+//  ROTA DE RANKING
+// ==========================
+app.get("https://cybermakersite-production.up.railway.app/api/ranking", (req, res) => {
+  const sql = "SELECT id, nome, foto, pontos, online FROM usuarios ORDER BY pontos DESC";
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error("Erro ao buscar ranking:", err);
+      return res.status(500).json({ success: false, error: "Erro ao carregar ranking" });
+    }
+    res.json(results);
+  });
+});
+// Atualiza pontos de um usuário
+app.post("https://cybermakersite-production.up.railway.app/api/ranking/pontos", (req, res) => {
+  const { usuario_id, pontos } = req.body;
+  if (!usuario_id || pontos === undefined) {
+    return res.status(400).json({ success: false, error: "Dados inválidos" });
+  }
+
+  const sql = "UPDATE usuarios SET pontos = ? WHERE id = ?";
+  db.query(sql, [pontos, usuario_id], (err, result) => {
+    if (err) {
+      console.error("Erro ao atualizar pontos:", err);
+      return res.status(500).json({ success: false, error: "Erro ao atualizar pontos" });
+    }
+    res.json({ success: true });
+  });
+});
+
 
 // Fallback para o index.html
 app.get("*", (req, res) => {
