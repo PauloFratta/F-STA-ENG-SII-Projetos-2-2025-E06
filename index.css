@@ -202,10 +202,13 @@
       padding: 60px 20px;
       text-align: center;
       transition: opacity 1s ease;
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 1s ease, transform 1s ease;
     }
 
     .section img {
-      max-width: 300px;
+      max-width: 500px;
       margin-bottom: 20px;
       border-radius: 12px;
       box-shadow: 0 0 20px rgba(0,0,0,0.5);
@@ -351,4 +354,24 @@
         .back-button {
             margin-top: 20px;
             text-align: center;
+        }
+
+                /* quando visível */
+        .section.show {
+          opacity: 1;
+          transform: translateY(0);
+        }
+
+        /* variações (para diversificar) */
+        .fade-up    { transform: translateY(50px); }
+        .fade-left  { transform: translateX(-50px); }
+        .fade-right { transform: translateX(50px); }
+        .fade-zoom  { transform: scale(0.85); }
+
+        .section.show.fade-up,
+        .section.show.fade-left,
+        .section.show.fade-right,
+        .section.show.fade-zoom {
+          transform: none;
+          opacity: 1;
         }
