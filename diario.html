@@ -228,6 +228,8 @@
 
       <label for="descricao">Descrição:</label>
       <textarea id="descricao" name="descricao" rows="5" placeholder="Descreva sua ideia..."></textarea>
+      <label for="imagem">Imagem da Ideia:</label>
+      <input type="file" id="imagem" accept="image/*">
 
       <button type="submit">Guardar no Diário</button>
     </form>
@@ -297,38 +299,50 @@
 
   // Salvar ideia no banco
   form.addEventListener('submit', async e => {
-    e.preventDefault();
-    if (!usuarioLogado) {
-      alert("Você precisa estar logado para salvar ideias!");
-      return;
-    }
+  e.preventDefault();
+  if (!usuarioLogado) {
+    alert("Você precisa estar logado para salvar ideias!");
+    return;
+  }
 
-    const titulo = document.getElementById('titulo').value.trim();
-    const categoria = document.getElementById('categoria').value;
-    const descricao = document.getElementById('descricao').value.trim();
+  const titulo = document.getElementById('titulo').value.trim();
+  const categoria = document.getElementById('categoria').value;
+  const descricao = document.getElementById('descricao').value.trim();
+  const imagemArquivo = document.getElementById('imagem').files[0];
 
-    const res = await fetch("https://cybermakersite-production.up.railway.app/api/ideias", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        usuario_id: usuarioLogado.id,
-        titulo,
-        categoria,
-        descricao
-      })
+  let imagemBase64 = null;
+
+  if (imagemArquivo) {
+    const leitor = new FileReader();
+    imagemBase64 = await new Promise(resolve => {
+      leitor.onload = () => resolve(leitor.result);
+      leitor.readAsDataURL(imagemArquivo);
     });
+  }
 
-    const data = await res.json();
-    if (data.success) {
-      alert("Ideia guardada com sucesso!");
-      form.reset();
-      carregarIdeias();
-    } else {
-      alert("Erro: " + data.error);
-    }
+  const res = await fetch("https://cybermakersite-production.up.railway.app/api/ideias", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      usuario_id: usuarioLogado.id,
+      titulo,
+      categoria,
+      descricao,
+      imagem: imagemBase64 // <<<<<< AQUI
+    })
   });
 
-  carregarIdeias();
+  const data = await res.json();
+  if (data.success) {
+    alert("Ideia guardada com sucesso!");
+    form.reset();
+    carregarIdeias();
+  } else {
+    alert("Erro: " + data.error);
+  }
+});
+
+
 </script>
 
 </body>

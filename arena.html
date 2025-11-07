@@ -306,29 +306,124 @@
     fetchRanking();
     setInterval(fetchRanking, 5000);
 
-    /* ===== SCRIPT DAS IDEIAS ===== */
-    const arena = document.getElementById("arena");
-    async function carregarIdeias() {
-      arena.innerHTML = "";
-      const res = await fetch("https://cybermakersite-production.up.railway.app/api/ideias");
-      const ideias = await res.json();
+
+  // ===== SCRIPT DAS IDEIAS (substitua sua implementação atual) =====
+  const arena = document.getElementById("arena");
+
+  // utilitário que tenta extrair id/nome de autor em várias chaves possíveis
+  function findUserForIdea(ideia, usersMap) {
+    if (!ideia || !usersMap) return null;
+
+    // chaves possíveis para ligar ideia -> usuário
+    const possibleKeys = [
+      'autorId','autor_id','usuarioId','usuario_id','userId','user_id','idUsuario','id_usuario','uid','user','autor','autor_nome','nome_autor'
+    ];
+
+    // tenta por id/uid primeiro (valores que sejam numéricos ou pareçam ids)
+    for (const k of possibleKeys) {
+      if (ideia[k]) {
+        const keyval = String(ideia[k]).toLowerCase().trim();
+        if (usersMap.byId && usersMap.byId[keyval]) return usersMap.byId[keyval];
+        if (usersMap.byName && usersMap.byName[keyval]) return usersMap.byName[keyval];
+      }
+    }
+
+    // se a ideia só tem 'autor' como string -> tenta casar por nome
+    if (ideia.autor) {
+      const n = String(ideia.autor).toLowerCase().trim();
+      if (usersMap.byName && usersMap.byName[n]) return usersMap.byName[n];
+    }
+
+    // fallback: se houver um user default no mapa (por exemplo primeiro)
+    if (usersMap.first) return usersMap.first;
+
+    return null;
+  }
+
+  async function carregarIdeias() {
+    arena.innerHTML = "";
+    try {
+      // busca ideias (pode retornar só { titulo: '...' } por item)
+      const ideiasRes = await fetch("https://cybermakersite-production.up.railway.app/api/ideias");
+      const ideias = await ideiasRes.json();
+
+      // busca usuários (reaproveitamos o endpoint do ranking que já retorna foto/nome)
+      let users = [];
+      try {
+        const usersRes = await fetch("https://cybermakersite-production.up.railway.app/api/ranking");
+        users = await usersRes.json();
+      } catch (uerr) {
+        console.warn("Não foi possível buscar /api/ranking:", uerr);
+        users = [];
+      }
+
+      // monta mapa de usuários para rápidas buscas por id e por nome (tudo em lowercase)
+      const usersMap = { byId: {}, byName: {}, first: null };
+      if (Array.isArray(users) && users.length > 0) {
+        users.forEach(u => {
+          // normaliza potenciais ids
+          if (u.id !== undefined) usersMap.byId[String(u.id).toLowerCase()] = u;
+          if (u._id !== undefined) usersMap.byId[String(u._id).toLowerCase()] = u;
+          if (u.usuarioId !== undefined) usersMap.byId[String(u.usuarioId).toLowerCase()] = u;
+          if (u.idUsuario !== undefined) usersMap.byId[String(u.idUsuario).toLowerCase()] = u;
+          // mapeia por nome
+          if (u.nome) usersMap.byName[String(u.nome).toLowerCase()] = u;
+          if (!usersMap.first) usersMap.first = u;
+        });
+      }
+
+      // valida e fallback caso ideias não seja array
+      if (!Array.isArray(ideias) || ideias.length === 0) {
+        arena.innerHTML = "<div style='color:#f2c6c6;text-align:center;width:100%'>Nenhuma ideia encontrada.</div>";
+        return;
+      }
+
       ideias.forEach((ideia, index) => {
         const card = document.createElement("div");
         card.className = "card";
+
+        // tenta achar usuário ligado à ideia
+        const usuario = findUserForIdea(ideia, usersMap);
+
+        // perfil: prioridade -> ideia.foto -> usuario.foto -> imagens/default.jpg
+        const perfilSrc = (ideia && (ideia.foto || ideia.autor_foto)) || (usuario && (usuario.foto || usuario.profile || usuario.avatar)) || "imagens/default.jpg";
+
+        // nome do autor: ideia.autor -> usuario.nome -> 'Autor'
+        const autorNome = ideia.autor || (usuario && (usuario.nome || usuario.username || usuario.user)) || "Autor";
+
+        // imagem da ideia: ideia.img || ideia.imagem || fallback default
+        const ideiaImgSrc = ideia.img || ideia.imagem || ideia.imagem_principal || "imagens/default.jpg";
+
+        // descricao: ideia.descricao ou texto auxiliar se existir, senão vazio
+        const ideiaDesc = ideia.descricao || ideia.texto || ideia.summary || "";
+
         card.innerHTML = `
           <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
-            <img src="${ideia.foto_autor || 'https://via.placeholder.com/40'}" alt="foto autor" width="40" height="40" style="border-radius:50%;">
-            <strong>${ideia.autor}</strong>
+            <div style="width:100%;height:100%;object-fit:cover;border-radius:100%;">
+              <img src="${perfilSrc}" alt="foto autor">
+            </div>
+            <strong style="color:#ff8080">${autorNome}</strong>
           </div>
-          <img src="${ideia.img || 'https://via.placeholder.com/300x150/550000/ffffff?text=Ideia'}" alt="foto ideia">
-          <h3>${ideia.titulo}</h3>
-          <p>${ideia.descricao}</p>
+
+          <img src="${ideiaImgSrc}" alt="foto ideia" style="width:100%;height:150px;object-fit:cover;border-radius:12px;margin-bottom:0.8rem;">
+
+          <h3>${ideia.titulo || 'Sem título'}</h3>
+          <p>${ideiaDesc}</p>
+
           <button class="concluir-btn" onclick="abrirModal(${index})">Concluir</button>
         `;
+
         arena.appendChild(card);
       });
+
+    } catch (err) {
+      console.error("Erro ao carregar ideias:", err);
+      arena.innerHTML = "<div style='color:#f2c6c6;text-align:center;width:100%'>Erro ao carregar ideias.</div>";
     }
-    function abrirModal(index) {
+  }
+
+  // mantém as funções de modal já presentes
+  function abrirModal(index) {
     document.getElementById("modal").style.display = "flex";
     document.getElementById("concluir-form").onsubmit = (e) => {
       e.preventDefault();
@@ -341,7 +436,10 @@
     document.getElementById("modal").style.display = "none";
   }
 
-    carregarIdeias();
+  // chamada inicial
+  carregarIdeias();
+
+
   </script>
 </body>
 </html>
