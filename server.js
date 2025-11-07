@@ -158,6 +158,63 @@ app.post("https://cybermakersite-production.up.railway.app/api/ideias", upload.s
   }
 });
 
+// ===============================
+// 🌿 COMUNIDADE (POSTS tipo Reddit)
+// ===============================
+
+// Criar post (com imagem opcional)
+app.post("cybermakersite-production.up.railway.app/api/comunidade", upload.single("imagem"), async (req, res) => {
+  try {
+    const { usuario_id, titulo, texto } = req.body;
+
+    if (!usuario_id || !titulo || !texto)
+      return res.json({ success: false, error: "Campos incompletos" });
+
+    let imagemBase64 = null;
+
+    if (req.file) {
+      const buffer = await sharp(req.file.buffer)
+        .resize({ width: 800 })
+        .jpeg({ quality: 65 })
+        .toBuffer();
+
+      imagemBase64 = `data:image/jpeg;base64,${buffer.toString("base64")}`;
+    }
+
+    await pool.query(
+      "INSERT INTO comunidade_posts (usuario_id, titulo, texto, imagem) VALUES (?, ?, ?, ?)",
+      [usuario_id, titulo, texto, imagemBase64]
+    );
+
+    // +10 pontos automaticamente ao postar 🎁
+    await pool.query(
+      "UPDATE usuarios SET pontos = pontos + 10 WHERE id = ?",
+      [usuario_id]
+    );
+
+    res.json({ success: true });
+
+  } catch (err) {
+    console.error("Erro ao postar:", err);
+    res.json({ success: false, error: "Erro interno" });
+  }
+});
+
+// Listar posts (mais recentes primeiro)
+app.get("cybermakersite-production.up.railway.app/api/comunidade", async (req, res) => {
+  try {
+    const [posts] = await pool.query(
+      `SELECT comunidade_posts.*, usuarios.nome, usuarios.foto
+       FROM comunidade_posts
+       JOIN usuarios ON comunidade_posts.usuario_id = usuarios.id
+       ORDER BY comunidade_posts.data_criacao DESC`
+    );
+    res.json(posts);
+  } catch (err) {
+    console.error(err);
+    res.json({ success: false });
+  }
+});
 
 // ===============================
 // ✅ Ranking
@@ -187,6 +244,47 @@ app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
+// === COMUNIDADE: POSTAR ===
+app.post("cybermakersite-production.up.railway.app/api/comunidade", async (req, res) => {
+  try {
+    const { usuario_id, titulo, texto, imagem } = req.body;
+
+    if (!usuario_id || !titulo || !texto) {
+      return res.json({ success: false, error: "Dados incompletos." });
+    }
+
+    await db.query(
+      "INSERT INTO comunidade_posts (usuario_id, titulo, texto, imagem) VALUES (?, ?, ?, ?)",
+      [usuario_id, titulo, texto, imagem || null]
+    );
+
+    // +10 pontos ao postar
+    await db.query("UPDATE usuarios SET pontos = pontos + 10 WHERE id = ?", [usuario_id]);
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("ERR POSTAR COMUNIDADE:", err);
+    res.json({ success: false, error: "Erro interno." });
+  }
+});
+
+// === COMUNIDADE: CARREGAR FEED ===
+app.get("cybermakersite-production.up.railway.app/api/comunidade", async (req, res) => {
+  try {
+    const [rows] = await db.query(`
+      SELECT p.id, p.titulo, p.texto, p.imagem, p.data_criacao,
+             u.nome AS autor_nome, u.foto AS autor_foto
+      FROM comunidade_posts p
+      JOIN usuarios u ON p.usuario_id = u.id
+      ORDER BY p.data_criacao DESC
+    `);
+
+    res.json(rows);
+  } catch (err) {
+    console.error("ERR FEED COMUNIDADE:", err);
+    res.json({ success: false, error: "Erro interno." });
+  }
+});
 
 // ===============================
 // Iniciar Servidor
