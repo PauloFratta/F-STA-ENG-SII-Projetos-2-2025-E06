@@ -56,7 +56,7 @@ app.use("/uploads", express.static(uploadDir));
 // ===============================
 // ✅ Registro (com foto de perfil)
 // ===============================
-app.post("https://cybermakersite-production.up.railway.app/api/registrar", upload.single("foto"), async (req, res) => {
+app.post("/api/registrar", upload.single("foto"), async (req, res) => {
   try {
     const { nome, email, senha } = req.body;
 
@@ -98,7 +98,7 @@ app.post("https://cybermakersite-production.up.railway.app/api/registrar", uploa
 // ===============================
 // ✅ Login
 // ===============================
-app.post("https://cybermakersite-production.up.railway.app/api/login", async (req, res) => {
+app.post("/api/login", async (req, res) => {
   try {
     const { email, senha } = req.body;
 
@@ -128,7 +128,7 @@ app.post("https://cybermakersite-production.up.railway.app/api/login", async (re
 // ===============================
 // ✅ Salvar IDEIA com IMAGEM
 // ===============================
-app.post("https://cybermakersite-production.up.railway.app/api/ideias", upload.single("imagem"), async (req, res) => {
+app.post("/api/ideias", upload.single("imagem"), async (req, res) => {
   try {
     const { usuario_id, titulo, categoria, descricao } = req.body;
 
@@ -158,43 +158,12 @@ app.post("https://cybermakersite-production.up.railway.app/api/ideias", upload.s
   }
 });
 
-app.post("/api/conclusoes", async (req, res) => {
-  try {
-    const { id, video, imagens, descricao } = req.body;
-
-    if (!ideia_id || !video || !imagens || !descricao) {
-      return res.json({ success: false, error: "Campos incompletos." });
-    }
-
-    await pool.query(
-      "INSERT INTO conclusoes (ideia, video, imagem, `descrição`, data) VALUES (?, ?, ?, ?, NOW())",
-      [ideia_id, video, imagens, descricao]
-    );
-
-    await pool.query(
-      `UPDATE usuarios u 
-       JOIN ideias i ON u.id = i.usuario_id 
-       SET u.pontos = u.pontos + 30 
-       WHERE i.id = ?`,
-      [ideia_id]
-    );
-
-    res.json({ success: true });
-
-  } catch (err) {
-    console.error("Erro ao salvar conclusão:", err);
-    res.json({ success: false, error: "Erro no servidor." });
-  }
-});
-
-
-
 // ===============================
 // 🌿 COMUNIDADE (POSTS tipo Reddit)
 // ===============================
 
 // Criar post (com imagem opcional)
-app.post("cybermakersite-production.up.railway.app/api/comunidade", upload.single("imagem"), async (req, res) => {
+app.post("/api/comunidade", upload.single("imagem"), async (req, res) => {
   try {
     const { usuario_id, titulo, texto } = req.body;
 
@@ -261,7 +230,7 @@ app.get("https://cybermakersite-production.up.railway.app/api/ranking", async (r
   }
 });
 
-app.post("https://cybermakersite-production.up.railway.app/api/ranking/pontos", async (req, res) => {
+app.post("/api/ranking/pontos", async (req, res) => {
   const { usuario_id, pontos } = req.body;
   await pool.query("UPDATE usuarios SET pontos = ? WHERE id = ?", [pontos, usuario_id]);
   res.json({ success: true });
@@ -276,7 +245,7 @@ app.get("*", (req, res) => {
 });
 
 // === COMUNIDADE: POSTAR ===
-app.post("cybermakersite-production.up.railway.app/api/comunidade", async (req, res) => {
+app.post("/api/comunidade", async (req, res) => {
   try {
     const { usuario_id, titulo, texto, imagem } = req.body;
 
@@ -300,7 +269,7 @@ app.post("cybermakersite-production.up.railway.app/api/comunidade", async (req, 
 });
 
 // === COMUNIDADE: CARREGAR FEED ===
-app.get("cybermakersite-production.up.railway.app/api/comunidade", async (req, res) => {
+app.get("ybermakersite-production.up.railway.appc/api/comunidade", async (req, res) => {
   try {
     const [rows] = await db.query(`
       SELECT p.id, p.titulo, p.texto, p.imagem, p.data_criacao,
