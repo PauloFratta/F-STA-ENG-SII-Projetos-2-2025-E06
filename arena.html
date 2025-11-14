@@ -383,6 +383,8 @@
         if (!usersMap.first) usersMap.first = u;
       });
     }
+    
+    window.ideiasCarregadas = ideias;
 
     ideias.forEach((ideia, index) => {
       const usuario =
@@ -423,13 +425,48 @@
 
   // mantém as funções de modal já presentes
   function abrirModal(index) {
-    document.getElementById("modal").style.display = "flex";
-    document.getElementById("concluir-form").onsubmit = (e) => {
-      e.preventDefault();
-      alert("Projeto concluído e registrado com sucesso! 🌑🔥");
-      fecharModal();
+  document.getElementById("modal").style.display = "flex";
+
+  const ideia = window.ideiasCarregadas[index];
+
+  document.getElementById("concluir-form").onsubmit = async (e) => {
+    e.preventDefault();
+
+    const video = document.getElementById("video").value;
+    const imagens = document.getElementById("imagens").value;
+    const descricao = document.getElementById("descricao").value;
+
+    const body = {
+      ideia_id: ideia.id,
+      video,
+      imagem: imagens,
+      descricao
     };
-  }
+
+    try {
+      const res = await fetch("https://cybermakersite-production.up.railway.app/api/conclusoes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        alert("Conclusão enviada com sucesso! 🌟🔥");
+      } else {
+        alert("Erro ao enviar conclusão: " + data.error);
+      }
+
+    } catch (err) {
+      alert("Falha ao conectar ao servidor.");
+      console.error(err);
+    }
+
+    fecharModal();
+  };
+}
+
 
   function fecharModal() {
     document.getElementById("modal").style.display = "none";
