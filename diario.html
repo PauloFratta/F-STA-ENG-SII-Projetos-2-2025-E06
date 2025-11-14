@@ -8,11 +8,6 @@
   <link rel="stylesheet" href="index.css"/>
 
   <style>
-  /* (todo o seu CSS permanece exatamente igual, não mexi em nada) */
-  </style>
-
-</head>
-<style>
  body {
       margin: 0;
       min-height: 100vh;
@@ -210,8 +205,9 @@
     }
 
   </style>
+  
+</head>
 <body>
-
   <div class="vignette"></div>
   <div class="lanterna"></div>
 
@@ -233,19 +229,18 @@
       <label for="descricao">Descrição:</label>
       <textarea id="descricao" name="descricao" rows="5" placeholder="Descreva sua ideia..."></textarea>
 
-      <label for="imagem">Imagem da Ideia:</label>
-      <input type="file" id="imagem" accept="image/*">
-
       <button type="submit">Guardar no Diário</button>
     </form>
-
     <br>
     <div class="choices">
-      <a href="index.html"><button class="choice-btn"><span>Voltar ao Inicio</span></button></a>
-      <a href="arena.html"><button class="choice-btn1"><span>Entrar na Arena</span></button></a>
-    </div>
+      <a href="index.html"> <button class="choice-btn"><span>Voltar ao Inicio</span></button> </a>
+      <a href="arena.html"> <button class="choice-btn1"><span>Entrar na Arena</span></button> </a>
+     </div><br><br><br>
+     <a href = "registro.html"> </a>
 
-    <section class="historico" id="historico"></section>
+    <section class="historico" id="historico">
+      <!-- Blocos de ideias aparecerão aqui -->
+    </section>
   </main>
 
   <footer>
@@ -263,77 +258,54 @@
     document.body.appendChild(p);
   }
 
+  // lanterna
   const lanterna = document.querySelector('.lanterna');
   document.addEventListener('mousemove', e => {
     lanterna.style.top = `${e.clientY}px`;
     lanterna.style.left = `${e.clientX}px`;
   });
 
+  // salvar ideias no histórico
   const form = document.getElementById('formIdeia');
   const historico = document.getElementById('historico');
   const usuarioLogado = JSON.parse(localStorage.getItem("usuarioLogado"));
 
-  // Carrega ideias ordenadas por data (desc)
+  // Carregar ideias do usuário logado
   async function carregarIdeias() {
     historico.innerHTML = "";
     if (!usuarioLogado) return;
 
-    const res = await fetch(`https://cybermakersite-production.up.railway.app/api/ideias`);
+    const res = await fetch(`https://cybermakersite-production.up.railway.app/api/ideias/${usuarioLogado.id}`);
     const ideias = await res.json();
 
-    ideias
-      .filter(i => i.usuario_id === usuarioLogado.id)
-      .sort((a, b) => new Date(b.created_at || b.data) - new Date(a.created_at || a.data))
-      .forEach(ideia => {
-
-        const bloco = document.createElement("div");
-        bloco.className = "bloco-ideia";
-
-        const dataFormatada = ideia.created_at
-          ? new Date(ideia.created_at).toLocaleString("pt-BR")
-          : "Data não disponível";
-
-        bloco.innerHTML = `
-          <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
-            <img src="${usuarioLogado.foto || 'https://via.placeholder.com/40'}"
-                 alt="foto autor" width="40" height="40" style="border-radius:50%;">
-            <strong>${usuarioLogado.nome}</strong>
-          </div>
-
-          <h3>${ideia.titulo}</h3>
-          <p><strong>Categoria:</strong> ${ideia.categoria}</p>
-          <p>${ideia.descricao}</p>
-
-          ${ideia.imagem ? `<img src="${ideia.imagem}" style="width:100%; border-radius:8px; margin-top:10px;">` : ""}
-
-          <p style="font-size:0.85rem; color:#999; margin-top:6px;">
-            <strong>Publicado em:</strong> ${dataFormatada}
-          </p>
-        `;
-
-        historico.appendChild(bloco);
-      });
+    ideias.forEach(ideia => {
+      const bloco = document.createElement("div");
+      bloco.className = "bloco-ideia";
+      bloco.innerHTML = `
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+          <img src="${usuarioLogado.foto || 'https://via.placeholder.com/40'}"
+               alt="foto autor" width="40" height="40" style="border-radius:50%;">
+          <strong>${usuarioLogado.nome}</strong>
+        </div>
+        <h3>${ideia.titulo}</h3>
+        <p><strong>Categoria:</strong> ${ideia.categoria}</p>
+        <p>${ideia.descricao}</p>
+      `;
+      historico.appendChild(bloco);
+    });
   }
 
-  // Salva ideia (com imagem base64 se houver)
+  // Salvar ideia no banco
   form.addEventListener('submit', async e => {
     e.preventDefault();
-    if (!usuarioLogado) return alert("Você precisa estar logado para salvar ideias!");
-
-    const titulo = titulo.value.trim();
-    const categoria = categoria.value;
-    const descricao = descricao.value.trim();
-    const arquivo = imagem.files[0];
-
-    let imgBase64 = null;
-
-    if (arquivo) {
-      imgBase64 = await new Promise(resolve => {
-        const r = new FileReader();
-        r.onload = () => resolve(r.result);
-        r.readAsDataURL(arquivo);
-      });
+    if (!usuarioLogado) {
+      alert("Você precisa estar logado para salvar ideias!");
+      return;
     }
+
+    const titulo = document.getElementById('titulo').value.trim();
+    const categoria = document.getElementById('categoria').value;
+    const descricao = document.getElementById('descricao').value.trim();
 
     const res = await fetch("https://cybermakersite-production.up.railway.app/api/ideias", {
       method: "POST",
@@ -342,13 +314,13 @@
         usuario_id: usuarioLogado.id,
         titulo,
         categoria,
-        descricao,
-        imagem: imgBase64
+        descricao
       })
     });
 
     const data = await res.json();
     if (data.success) {
+      alert("Ideia guardada com sucesso!");
       form.reset();
       carregarIdeias();
     } else {
