@@ -316,26 +316,17 @@
       });
   }
 
-  // Salva ideia (com imagem base64 se houver)
-  form.addEventListener('submit', async e => {
+// Salvar ideia no banco
+form.addEventListener('submit', async e => {
     e.preventDefault();
-    if (!usuarioLogado) return alert("Você precisa estar logado para salvar ideias!");
-
-    const titulo = campoTitulo.value.trim();
-    const categoria = campoCategoria.value;
-    const descricao = campoDescricao.value.trim();
-    const arquivo = campoImagem.files[0];
-
-
-    let imgBase64 = null;
-
-    if (arquivo) {
-      imgBase64 = await new Promise(resolve => {
-        const r = new FileReader();
-        r.onload = () => resolve(r.result);
-        r.readAsDataURL(arquivo);
-      });
+    if (!usuarioLogado) {
+      alert("Você precisa estar logado para salvar ideias!");
+      return;
     }
+
+    const titulo = document.getElementById('titulo').value.trim();
+    const categoria = document.getElementById('categoria').value;
+    const descricao = document.getElementById('descricao').value.trim();
 
     const res = await fetch("https://cybermakersite-production.up.railway.app/api/ideias", {
       method: "POST",
@@ -344,13 +335,13 @@
         usuario_id: usuarioLogado.id,
         titulo,
         categoria,
-        descricao,
-        imagem: imgBase64
+        descricao
       })
     });
 
     const data = await res.json();
     if (data.success) {
+      alert("Ideia guardada com sucesso!");
       form.reset();
       carregarIdeias();
     } else {
