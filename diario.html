@@ -6,7 +6,6 @@
   <title>Diário - CyberMaker</title>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600&family=Inter:wght@300;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="index.css"/>
-  <script src="script.js"></script>
 
   <style>
   /* (todo o seu CSS permanece exatamente igual, não mexi em nada) */
@@ -316,17 +315,25 @@
       });
   }
 
-// Salvar ideia no banco
-form.addEventListener('submit', async e => {
+  // Salva ideia (com imagem base64 se houver)
+  form.addEventListener('submit', async e => {
     e.preventDefault();
-    if (!usuarioLogado) {
-      alert("Você precisa estar logado para salvar ideias!");
-      return;
-    }
+    if (!usuarioLogado) return alert("Você precisa estar logado para salvar ideias!");
 
-    const titulo = document.getElementById('titulo').value.trim();
-    const categoria = document.getElementById('categoria').value;
-    const descricao = document.getElementById('descricao').value.trim();
+    const titulo = titulo.value.trim();
+    const categoria = categoria.value;
+    const descricao = descricao.value.trim();
+    const arquivo = imagem.files[0];
+
+    let imgBase64 = null;
+
+    if (arquivo) {
+      imgBase64 = await new Promise(resolve => {
+        const r = new FileReader();
+        r.onload = () => resolve(r.result);
+        r.readAsDataURL(arquivo);
+      });
+    }
 
     const res = await fetch("https://cybermakersite-production.up.railway.app/api/ideias", {
       method: "POST",
@@ -335,13 +342,13 @@ form.addEventListener('submit', async e => {
         usuario_id: usuarioLogado.id,
         titulo,
         categoria,
-        descricao
+        descricao,
+        imagem: imgBase64
       })
     });
 
     const data = await res.json();
     if (data.success) {
-      alert("Ideia guardada com sucesso!");
       form.reset();
       carregarIdeias();
     } else {
