@@ -321,10 +321,11 @@
     e.preventDefault();
     if (!usuarioLogado) return alert("Você precisa estar logado para salvar ideias!");
 
-    const titulo = titulo.value.trim();
-    const categoria = categoria.value;
-    const descricao = descricao.value.trim();
-    const arquivo = imagem.files[0];
+    const titulo = campoTitulo.value.trim();
+    const categoria = campoCategoria.value;
+    const descricao = campoDescricao.value.trim();
+    const arquivo = campoImagem.files[0];
+
 
     let imgBase64 = null;
 
