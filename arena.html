@@ -265,6 +265,13 @@
       </form>
     </div>
   </div>
+
+
+  <div class="historico-wrapper">
+    <h2>Histórico de Conclusões</h2>
+    <div id="lista-historico"></div>
+  </div>
+  
   <footer>2025 CyberMaker - Ecos da Arena</footer>
 
   <script>
@@ -475,6 +482,27 @@
   // chamada inicial
   carregarIdeias();
 
+  //histórico de conclusões
+  async function carregarHistorico() {
+  const res = await fetch("https://cybermakersite-production.up.railway.app/api/historico");
+  const dados = await res.json();
+
+  const area = document.getElementById("lista-historico");
+  area.innerHTML = "";
+
+  dados.forEach(item => {
+    area.innerHTML += `
+      <div class="historico-item">
+        <strong>${item.usuario}</strong> concluiu o card <b>#${item.card_id}</b><br>
+        <em>${item.mensagem}</em><br>
+        <small>${new Date(item.data).toLocaleString()}</small>
+      </div>
+    `;
+  });
+}
+
+carregarHistorico();
+setInterval(carregarHistorico, 15000); // atualiza a cada 15s
 
   </script>
 </body>
