@@ -399,29 +399,31 @@
         usersMap.byName[String((ideia.autor || "").toLowerCase())] ||
         usersMap.first;
 
-      const card = document.createElement("div");
-      card.className = "card";
-      card.innerHTML = `
-        <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
-          <img src="${ideia.foto || (usuario && usuario.foto) || 'imagens/default.jpg'}"
-               width="40" height="40" style="border-radius:50%;object-fit:cover;">
-          <strong style="color:#ff8080">${ideia.autor || (usuario && usuario.nome) || 'Autor'}</strong>
-        </div>
+        const card = document.createElement("div");
+card.className = "card";
+card.dataset.id = ideia.id;
 
-        <img src="${ideia.img || ideia.imagem || 'imagens/default.jpg'}"
-             style="width:100%;height:150px;object-fit:cover;border-radius:12px;margin-bottom:0.8rem;">
+card.innerHTML = `
+  <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+    <img src="${ideia.foto || (usuario && usuario.foto) || 'imagens/default.jpg'}"
+         width="40" height="40" style="border-radius:50%;object-fit:cover;">
+    <strong style="color:#ff8080">${ideia.autor || (usuario && usuario.nome) || 'Autor'}</strong>
+  </div>
 
-        <h3>${ideia.titulo || 'Sem título'}</h3>
-        <p>${ideia.descrição || ''}</p>
+  <img src="${ideia.img || ideia.imagem || 'imagens/default.jpg'}"
+       style="width:100%;height:150px;object-fit:cover;border-radius:12px;margin-bottom:0.8rem;">
 
-        <div style="color:#aaa; font-size:12px; margin-top:6px;">
-          ${formatarTempo(ideia.created_at || ideia.data || ideia.data_criacao)}
-        </div>
+  <h3>${ideia.titulo || 'Sem título'}</h3>
+  <p>${ideia.descrição || ''}</p>
 
+  <div style="color:#aaa; font-size:12px; margin-top:6px;">
+    ${formatarTempo(ideia.created_at || ideia.data || ideia.data_criacao)}
+  </div>
 
-        <button class="concluir-btn" onclick="abrirModal(${index})">Concluir</button>
-      `;
-      arena.appendChild(card);
+  <button class="concluir-btn" onclick="abrirModal('${ideia.id}')">Concluir</button>
+`;
+arena.appendChild(card);
+
     });
 
   } catch (err) {
@@ -431,10 +433,10 @@
 }
 
   // mantém as funções de modal já presentes
-  function abrirModal(index) {
+  function abrirModal(id) {
   document.getElementById("modal").style.display = "flex";
 
-  const ideia = window.ideiasCarregadas[index];
+  const ideia = window.ideiasCarregadas.find(i => i.id == id);
 
   document.getElementById("concluir-form").onsubmit = async (e) => {
     e.preventDefault();
@@ -444,7 +446,7 @@
     const descrição = document.getElementById("descrição").value;
 
     const body = {
-      ideia: ideia.id,
+      ideia: id,
       video,
       imagem: imagens,
       descrição
@@ -461,6 +463,12 @@
 
       if (data.success) {
         alert("Conclusão enviada com sucesso! 🌟🔥");
+
+        // REMOVE O CARD PELO ID (agora funciona sempre!)
+        const cardRemover = document.querySelector(`.card[data-id="${id}"]`);
+        if (cardRemover) {
+          cardRemover.remove();
+        }
       } else {
         alert("Erro ao enviar conclusão: " + data.error);
       }
@@ -473,6 +481,7 @@
     fecharModal();
   };
 }
+
 
 
   function fecharModal() {
