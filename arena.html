@@ -432,8 +432,41 @@ arena.appendChild(card);
   }
 }
 
+//atualizar ranking
+async function atualizarRanking() {
+  try {
+    const resp = await fetch("https://cybermakersite-production.up.railway.app/api/ranking");
+    const data = await resp.json();
+    if (!data.success) {
+      console.error("Erro ao obter ranking:", data.error);
+      return;
+    }
+    const rankingEl = document.querySelector("#ranking-list"); // ajuste seletor
+    if (!rankingEl) return;
+
+    rankingEl.innerHTML = ""; // limpa
+
+    data.ranking.forEach((u, idx) => {
+      const item = document.createElement("div");
+      item.className = "ranking-item";
+      item.innerHTML = `
+        <div class="pos">${idx + 1}</div>
+        <img src="${u.foto || '/assets/default.png'}" alt="${u.nome}" class="avatar" />
+        <div class="nome">${u.nome}</div>
+        <div class="pontos">${u.pontos ?? 0} pts</div>
+      `;
+      rankingEl.appendChild(item);
+    });
+  } catch (err) {
+    console.error("Erro fetching ranking:", err);
+  }
+}
+
+
+
   // mantém as funções de modal já presentes
   function abrirModal(id) {
+
   document.getElementById("modal").style.display = "flex";
 
   const ideia = window.ideiasCarregadas.find(i => i.id == id);
@@ -477,6 +510,36 @@ arena.appendChild(card);
       alert("Falha ao conectar ao servidor.");
       console.error(err);
     }
+
+    try {
+    const resp = await fetch("https://cybermakersite-production.up.railway.app/api/concluir", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ usuario_id: usuarioId })
+    });
+    const data = await resp.json();
+    if (!data.success) {
+      console.error("Erro ao concluir:", data.error);
+      alert("Erro ao concluir. Veja console.");
+      return;
+    }
+
+    // Remove o card da lista (se for esse o fluxo)
+    if (cardElement) cardElement.remove();
+
+    // Atualiza ranking na tela (chama função que redesenha o ranking)
+    if (typeof atualizarRanking === "function") atualizarRanking();
+
+    // Opcional: atualiza contador de pontos do usuário logado na UI
+    if (data.usuario) {
+      const meuPontosEl = document.querySelector("#meus-pontos"); // ajuste o seletor
+      if (meuPontosEl) meuPontosEl.textContent = data.usuario.pontos;
+    }
+  } catch (err) {
+    console.error(err);
+    alert("Erro de rede ao tentar concluir.");
+  }
+
 
     fecharModal();
   };
