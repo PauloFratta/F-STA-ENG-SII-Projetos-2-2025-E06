@@ -432,8 +432,70 @@ arena.appendChild(card);
   }
 }
 
+//atualizar ranking
+async function atualizarRanking() {
+  try {
+    const resp = await fetch("https://cybermakersite-production.up.railway.app/api/ranking");
+    const data = await resp.json();
+    if (!data.success) {
+      console.error("Erro ao obter ranking:", data.error);
+      return;
+    }
+    const rankingEl = document.querySelector("#ranking-list"); // ajuste seletor
+    if (!rankingEl) return;
+
+    rankingEl.innerHTML = ""; // limpa
+
+    data.ranking.forEach((u, idx) => {
+      const item = document.createElement("div");
+      item.className = "ranking-item";
+      item.innerHTML = `
+        <div class="pos">${idx + 1}</div>
+        <img src="${u.foto || '/assets/default.png'}" alt="${u.nome}" class="avatar" />
+        <div class="nome">${u.nome}</div>
+        <div class="pontos">${u.pontos ?? 0} pts</div>
+      `;
+      rankingEl.appendChild(item);
+    });
+  } catch (err) {
+    console.error("Erro fetching ranking:", err);
+  }
+}
+
+
+
   // mantém as funções de modal já presentes
-  function abrirModal(id) {
+  // ===== SISTEMA DE PONTOS (NOVO E COMPLETO) =====
+let pontosAtuais = 0;
+
+// envia +1000 pontos ao servidor
+async function enviarPontosParaBanco(novosPontos) {
+  try {
+    const response = await fetch("https://cybermakersite-production.up.railway.app/api/pontos", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        pontos: novosPontos,
+        userId: usuarioId // <-- seu id de usuário aqui
+      })
+    });
+
+    const data = await response.json();
+    console.log("Pontos enviados:", data);
+  } catch (err) {
+    console.error("Erro ao enviar pontos:", err);
+  }
+}
+
+function adicionarPontos(valor) {
+  pontosAtuais += valor;
+  enviarPontosParaBanco(pontosAtuais);
+}
+
+
+
+// ===== ALTERAÇÃO NO FLUXO DO MODAL =====
+function abrirModal(id) {
   document.getElementById("modal").style.display = "flex";
 
   const ideia = window.ideiasCarregadas.find(i => i.id == id);
@@ -452,6 +514,7 @@ arena.appendChild(card);
       descrição
     };
 
+    // envia conclusão do card
     try {
       const res = await fetch("https://cybermakersite-production.up.railway.app/api/conclusoes", {
         method: "POST",
@@ -464,11 +527,15 @@ arena.appendChild(card);
       if (data.success) {
         alert("Conclusão enviada com sucesso! 🌟🔥");
 
-        // REMOVE O CARD PELO ID (agora funciona sempre!)
+        // REMOVE O CARD
         const cardRemover = document.querySelector(`.card[data-id="${id}"]`);
-        if (cardRemover) {
-          cardRemover.remove();
-        }
+        if (cardRemover) cardRemover.remove();
+
+        // AQUI GANHA +1000 PONTOS
+        adicionarPontos(1000);
+
+        // Atualizar ranking na tela
+        fetchRanking();
       } else {
         alert("Erro ao enviar conclusão: " + data.error);
       }
@@ -481,6 +548,7 @@ arena.appendChild(card);
     fecharModal();
   };
 }
+
 
 
 
