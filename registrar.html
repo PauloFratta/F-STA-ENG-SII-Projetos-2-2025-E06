@@ -13,6 +13,7 @@
       <input type="text" id="nome" placeholder="Nome" required>
       <input type="email" id="email" placeholder="Email" required>
       <input type="password" id="senha" placeholder="Senha" required>
+      
       <label for="foto">Foto de Perfil (opcional)</label>
       <input type="file" id="foto" accept="image/*">
       <button type="submit">Registrar</button>
@@ -27,7 +28,7 @@
     // Aqui definimos o endereço da API (Railway)
     const API_BASE = (location.hostname.includes("localhost"))
       ? "http://localhost:3000"
-      : "https://cybermakersite-production.up.railway.app";
+      : "https://cybermakersite-production-ec76.up.railway.app";
     // --- end config ---
 
     document.getElementById("form-registro").addEventListener("submit", async e => {
@@ -36,12 +37,14 @@
       const nome = document.getElementById("nome").value.trim();
       const email = document.getElementById("email").value.trim();
       const senha = document.getElementById("senha").value.trim();
+     
+
       const fotoInput = document.getElementById("foto");
 
       // Função auxiliar para enviar ao backend
       async function enviarRegistro(fotoBase64 = null) {
         try {
-          const res = await fetch(`https://cybermakersite-production.up.railway.app/api/registrar`, {
+          const res = await fetch(`https://cybermakersite-production-ec76.up.railway.app/api/registrar`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ nome, email, senha, foto: fotoBase64 })

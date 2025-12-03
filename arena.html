@@ -276,43 +276,19 @@
 
   <script>
     /* ===== SCRIPT DO RANKING ===== */
-    async function fetchRanking() {
-      try {
-        const res = await fetch("https://cybermakersite-production.up.railway.app/api/ranking");
-        const data = await res.json();
-        renderList(data);
-      } catch (err) {
-        console.warn("Falha ao buscar ranking:", err);
-      }
-    }
 
-    function renderList(users) {
-      const listEl = document.getElementById("list");
-      listEl.innerHTML = "";
-      if (!users || users.length === 0) {
-        listEl.innerHTML = "<div class='muted-small'>Nenhum usuário encontrado.</div>";
-        return;
-      }
-      users.sort((a,b)=> (b.pontos || 0) - (a.pontos || 0));
-      users.forEach((u, idx)=>{
-        const card = document.createElement("div");
-        card.className = "rank-card";
-        card.innerHTML = `
-          <div class="rank">${idx+1}</div>
-          <div class="userpic"><img src="${u.foto || 'imagens/default.jpg'}" style="width:100%;height:100%;object-fit:cover;"></div>
-          <div class="user-info">
-            <div class="name">${u.nome || 'Usuário'}</div>
-            <div class="sub">${u.online ? 'Online' : 'Offline'}</div>
-          </div>
-          <div class="points"><strong>${u.pontos || 0}</strong> pts</div>
-        `;
-        listEl.appendChild(card);
-      });
-    }
+    // ===== SISTEMA DE PONTOS LOCAL =====
+function getPontos() {
+  return parseInt(localStorage.getItem("pontosUsuario") || "0");
+}
 
-    document.getElementById("refreshBtn").addEventListener("click", fetchRanking);
-    fetchRanking();
-    setInterval(fetchRanking, 5000);
+function addPontos(qtd) {
+  const total = getPontos() + qtd;
+  localStorage.setItem("pontosUsuario", total);
+  return total;
+}
+
+
 
 
   // ===== SCRIPT DAS IDEIAS (substitua sua implementação atual) =====
@@ -369,7 +345,7 @@
   arena.innerHTML = "";
   try {
     // busca ideias
-    const ideiasRes = await fetch("https://cybermakersite-production.up.railway.app/api/ideias");
+    const ideiasRes = await fetch("https://cybermakersite-production-ec76.up.railway.app/api/ideias");
     let ideias = await ideiasRes.json();
 
     // Ordenar por data (do mais recente para o mais antigo)
@@ -378,7 +354,7 @@
     // busca usuários (para foto / nome)
     let users = [];
     try {
-      const usersRes = await fetch("https://cybermakersite-production.up.railway.app/api/ranking");
+      const usersRes = await fetch("https://cybermakersite-production-ec76.up.railway.app/api/ranking");
       users = await usersRes.json();
     } catch (e) { users = []; }
 
@@ -435,7 +411,7 @@ arena.appendChild(card);
 //atualizar ranking
 async function atualizarRanking() {
   try {
-    const resp = await fetch("https://cybermakersite-production.up.railway.app/api/ranking");
+    const resp = await fetch("https://cybermakersite-production-ec76.up.railway.app/api/ranking");
     const data = await resp.json();
     if (!data.success) {
       console.error("Erro ao obter ranking:", data.error);
@@ -486,7 +462,7 @@ async function atualizarRanking() {
     };
 
     try {
-      const res = await fetch("https://cybermaker-site.onrender.com/api/conclusoes", {
+      const res = await fetch("https://cybermakersite-production-ec76.up.railway.app/api/conclusoes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body)
@@ -505,6 +481,9 @@ async function atualizarRanking() {
       } else {
         alert("Erro ao enviar conclusão: " + data.error);
       }
+      // ⭐ AQUI SOMA PONTOS ⭐
+    addPontos(100);  // defina quantos pontos ganha por conclusão
+    renderRankingLocal();
 
     } catch (err) {
       alert("Falha ao conectar ao servidor.");
@@ -512,7 +491,7 @@ async function atualizarRanking() {
     }
 
     try {
-    const resp = await fetch("https://cybermakersite-production.up.railway.app/api/concluir", {
+    const resp = await fetch("https://cybermakersite-production-ec76.up.railway.app/api/concluir", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ usuario_id: usuarioId })
@@ -556,7 +535,7 @@ async function atualizarRanking() {
 
   //histórico de conclusões
   async function carregarHistorico() {
-  const res = await fetch("https://cybermakersite-production.up.railway.app/api/historico");
+  const res = await fetch("https://cybermakersite-production-ec76.up.railway.app/api/historico");
   const dados = await res.json();
 
   const area = document.getElementById("lista-historico");
@@ -574,7 +553,97 @@ async function atualizarRanking() {
 }
 
 carregarHistorico();
-setInterval(carregarHistorico, 15000); // atualiza a cada 15s
+/* ===== RANKING LOCAL — USUÁRIO + USUÁRIOS FALSOS ===== */
+
+/* Sistema de pontos local do usuário real */
+function getPontos() {
+  return parseInt(localStorage.getItem("pontosUsuario") || "0");
+}
+
+function addPontos(qtd) {
+  const total = getPontos() + qtd;
+  localStorage.setItem("pontosUsuario", total);
+  renderRankingLocal();
+  return total;
+}
+
+/* Usuários falsos (bots) */
+const usuariosFalsos = [
+  {
+    nome: "Lalla",
+    foto: "imagens/default.jpg",
+    pontos: 3200
+  },
+  {
+    nome: "KuroTech",
+    foto: "imagens/default.jpg",
+    pontos: 2700
+  },
+  {
+    nome: "Lunaris",
+    foto: "imagens/default.jpg",
+    pontos: 1900
+  },
+  {
+    nome: "ByteGirl",
+    foto: "imagens/default.jpg",
+    pontos: 1400
+  },
+  {
+    nome: "PhantomX",
+    foto: "imagens/default.jpg",
+    pontos: 900
+  }
+];
+
+/* Renderiza ranking misto (usuário real + bots) */
+function renderRankingLocal() {
+  const usuario = JSON.parse(localStorage.getItem("usuarioLogado") || "{}");
+
+  // cria entrada do usuário real
+  const usuarioReal = {
+    nome: usuario.nome || "Você",
+    foto: usuario.foto || "imagens/default.jpg",
+    pontos: getPontos(),
+    real: true
+  };
+
+  // junta usuários reais + falsos
+  const rankingCompleto = [usuarioReal, ...usuariosFalsos];
+
+  // ordenação descrescente
+  rankingCompleto.sort((a, b) => b.pontos - a.pontos);
+
+  const listEl = document.getElementById("list");
+  listEl.innerHTML = "";
+
+  rankingCompleto.forEach((u, index) => {
+    listEl.innerHTML += `
+      <div class="rank-card">
+        <div class="rank">${index + 1}</div>
+
+        <div class="userpic">
+          <img src="${u.foto}" style="width:100%;height:100%;object-fit:cover;">
+        </div>
+
+        <div class="user-info">
+          <div class="name">${u.nome}</div>
+          <div class="sub">${u.real ? "Você" : "CyberMaker AI"}</div>
+        </div>
+
+        <div class="points"><strong>${u.pontos}</strong> pts</div>
+      </div>
+    `;
+  });
+}
+
+/* Botão de atualização força rerender */
+document.getElementById("refreshBtn").addEventListener("click", renderRankingLocal);
+
+/* Primeira renderização */
+renderRankingLocal();
+
+
 
   </script>
 </body>
