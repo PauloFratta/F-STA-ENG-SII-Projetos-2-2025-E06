@@ -5,6 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Registro - CyberMaker</title>
   <link rel="stylesheet" href="registrar.css">
+  <style>
+    /* Estilos mínimos para a mensagem de senha */
+    .senha-msg {
+      margin-top: 6px;
+      font-size: 0.9rem;
+    }
+    .senha-fraca { color: #d9534f; }   /* vermelho */
+    .senha-media { color: #f0ad4e; }   /* laranja */
+    .senha-forte { color: #5cb85c; }   /* verde */
+  </style>
 </head>
 <body>
   <div class="registro-container">
@@ -13,7 +23,8 @@
       <input type="text" id="nome" placeholder="Nome" required>
       <input type="email" id="email" placeholder="Email" required>
       <input type="password" id="senha" placeholder="Senha" required>
-      
+      <div id="senha-msg" class="senha-msg"></div>
+
       <label for="foto">Foto de Perfil (opcional)</label>
       <input type="file" id="foto" accept="image/*">
       <button type="submit">Registrar</button>
@@ -25,26 +36,67 @@
 
   <script>
     // --- API base configuration ---
-    // Aqui definimos o endereço da API (Railway)
     const API_BASE = (location.hostname.includes("localhost"))
       ? "http://localhost:3000"
       : "https://cybermakersite-production-ec76.up.railway.app";
     // --- end config ---
+
+    const senhaInput = document.getElementById("senha");
+    const senhaMsg = document.getElementById("senha-msg");
+
+    function avaliarForcaSenha(s) {
+      let score = 0;
+      if (s.length >= 8) score++;
+      if (/[A-Z]/.test(s)) score++;
+      if (/[0-9]/.test(s)) score++;
+      if (/[^A-Za-z0-9]/.test(s)) score++;
+      return score; // 0..4
+    }
+
+    function atualizarMensagemSenha() {
+      const s = senhaInput.value;
+      const score = avaliarForcaSenha(s);
+      if (s.length === 0) {
+        senhaMsg.textContent = "";
+        senhaMsg.className = "senha-msg";
+        return;
+      }
+      if (score <= 1) {
+        senhaMsg.textContent = "Senha muito fraca — use pelo menos 8 caracteres, misture maiúsculas, números e símbolos.";
+        senhaMsg.className = "senha-msg senha-fraca";
+      } else if (score === 2) {
+        senhaMsg.textContent = "Senha fraca — acrescente maiúsculas, números ou símbolos.";
+        senhaMsg.className = "senha-msg senha-fraca";
+      } else if (score === 3) {
+        senhaMsg.textContent = "Senha média — boa, mas considere adicionar símbolos para maior segurança.";
+        senhaMsg.className = "senha-msg senha-media";
+      } else {
+        senhaMsg.textContent = "Senha forte";
+        senhaMsg.className = "senha-msg senha-forte";
+      }
+    }
+
+    senhaInput.addEventListener("input", atualizarMensagemSenha);
 
     document.getElementById("form-registro").addEventListener("submit", async e => {
       e.preventDefault();
 
       const nome = document.getElementById("nome").value.trim();
       const email = document.getElementById("email").value.trim();
-      const senha = document.getElementById("senha").value.trim();
-     
+      const senha = senhaInput.value;
+
+      // Verificar força mínima (exige score >= 2 ou 3 conforme preferência)
+      const minimoAceito = 2; // ajustar para 3 se quiser exigir mais
+      if (avaliarForcaSenha(senha) < minimoAceito) {
+        alert("Senha muito fraca. Melhore a senha antes de continuar.");
+        return;
+      }
 
       const fotoInput = document.getElementById("foto");
 
-      // Função auxiliar para enviar ao backend
       async function enviarRegistro(fotoBase64 = null) {
         try {
-          const res = await fetch(`https://cybermakersite-production-ec76.up.railway.app/api/registrar`, {
+          const res = await fetch(`${API_BASE}/api/registrar`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ nome, email, senha, foto: fotoBase64 })
@@ -55,7 +107,7 @@
             alert("Registrado com sucesso!");
             window.location.href = "login.html";
           } else {
-            alert("Erro: " + data.error);
+            alert("Erro: " + (data.error || "Erro desconhecido"));
           }
         } catch (err) {
           console.error("Erro na requisição:", err);
@@ -63,16 +115,11 @@
         }
       }
 
-      // Se o usuário escolheu foto → converter para Base64
       if (fotoInput.files.length > 0) {
         const reader = new FileReader();
-        reader.onload = () => {
-          const fotoBase64 = reader.result; // já vem no formato data:image/png;base64,...
-          enviarRegistro(fotoBase64);
-        };
+        reader.onload = () => enviarRegistro(reader.result);
         reader.readAsDataURL(fotoInput.files[0]);
       } else {
-        // Sem foto
         enviarRegistro();
       }
     });
